@@ -26,7 +26,7 @@ export default function Header() {
     <header className='bg-slate-500 shadow-md' style={{ height: '60px' }}>
       <div className='flex justify-between items-center max-w-6xl mx-auto p-2'> {/* Decreased padding */}
         <Link to='/' className='flex items-center'>
-          <img src='Widelogo.png' alt="Logo" className="logo" style={{ width: '200px', height: '40px' }} />
+          <img src='Widelogo.png' alt="Logo" className="logo" style={{ width: '150px', height: '40px' }} />
         </Link>
         <form
           onSubmit={handleSubmit}
@@ -38,7 +38,7 @@ export default function Header() {
             className='bg-transparent focus:outline-none px-2 py-1' // Decreased padding
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}            
-            style={{ width: '300px' }}
+            style={{ width: '250px' }}
           />
           <button>
             <FaSearch className='text-slate-600' />
