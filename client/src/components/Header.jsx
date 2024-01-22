@@ -38,7 +38,7 @@ export default function Header() {
             className='bg-transparent focus:outline-none px-2 py-1' // Decreased padding
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}            
-            style={{ width: '500px' }}
+            style={{ width: '300px' }}
           />
           <button>
             <FaSearch className='text-slate-600' />
