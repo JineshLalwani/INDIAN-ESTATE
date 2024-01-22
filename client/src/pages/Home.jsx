@@ -55,8 +55,8 @@ export default function Home() {
           place with ease
         </h1>
         <div className='text-gray-400 text-xs sm:text-sm'>
-          Sahand Estate is the best place to find your next perfect place to
-          live.
+          Indian Estate is the best place to find your next perfect place to
+          live developed by Jinesh Lalwani.
           <br />
           We have a wide range of properties for you to choose from.
         </div>
