@@ -32,6 +32,10 @@ export default function uploadImage(file, onProgress) {
       }
       if (xhr.status >= 200 && xhr.status < 300 && data && data.url) {
         resolve(data.url);
+      } else if (xhr.status === 401 || xhr.status === 403) {
+        reject(
+          new Error('Your session has expired — please sign in again.')
+        );
       } else {
         reject(new Error((data && data.message) || 'Image upload failed!'));
       }

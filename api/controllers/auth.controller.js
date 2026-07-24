@@ -113,6 +113,12 @@ export const google = async (req, res, next) => {
   }
 };
 
+// Reached only if verifyToken passed; lets the client confirm its
+// persisted login still has a live cookie behind it.
+export const validateSession = (req, res) => {
+  res.status(200).json({ valid: true });
+};
+
 export const signOut = async (req, res, next) => {
   try {
     res.clearCookie('access_token');

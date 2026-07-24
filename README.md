@@ -41,6 +41,7 @@ npm start       # serves the API and the built client
 | POST | `/api/auth/signin` | — | Sign in, sets `access_token` cookie |
 | POST | `/api/auth/google` | — | Sign in/up with Google |
 | GET | `/api/auth/signout` | — | Clear the auth cookie |
+| GET | `/api/auth/validate` | ✓ | Check whether the auth cookie is still valid |
 | POST | `/api/user/update/:id` | ✓ | Update own profile |
 | DELETE | `/api/user/delete/:id` | ✓ | Delete own account (and its listings) |
 | GET | `/api/user/listings/:id` | ✓ | List own listings |
