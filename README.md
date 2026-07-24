@@ -2,7 +2,7 @@
 
 A full-stack real-estate marketplace where users can sign up (email/password or Google), create property listings with images, and search listings by type, amenities, price range, and more.
 
-**Stack:** MongoDB · Express · React (Vite) · Node — with Redux Toolkit, Tailwind CSS, Firebase (OAuth + image storage), and JWT cookie auth.
+**Stack:** MongoDB · Express · React (Vite) · Node — with Redux Toolkit, Tailwind CSS, Firebase (Google OAuth only), and JWT cookie auth. Listing and avatar images are stored in MongoDB and served by the API — no paid storage service required.
 
 ## Getting started
 
@@ -45,6 +45,8 @@ npm start       # serves the API and the built client
 | DELETE | `/api/user/delete/:id` | ✓ | Delete own account (and its listings) |
 | GET | `/api/user/listings/:id` | ✓ | List own listings |
 | GET | `/api/user/:id` | ✓ | Get a user's public info |
+| POST | `/api/image/upload` | ✓ | Upload an image (raw body, `image/*`, max 2 MB) |
+| GET | `/api/image/:id` | — | Serve a stored image |
 | POST | `/api/listing/create` | ✓ | Create a listing |
 | POST | `/api/listing/update/:id` | ✓ | Update own listing |
 | DELETE | `/api/listing/delete/:id` | ✓ | Delete own listing |

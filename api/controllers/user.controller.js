@@ -2,6 +2,7 @@ import bcryptjs from 'bcryptjs';
 import User from '../models/user.model.js';
 import { errorHandler } from '../utils/error.js';
 import Listing from '../models/listing.model.js';
+import { deleteImagesByUrls } from './image.controller.js';
 
 export const test = (req, res) => {
     res.json({
@@ -53,6 +54,11 @@ export const deleteUser = async (req, res, next) => {
   if (req.user.id !== req.params.id)
     return next(errorHandler(401, 'You can only delete your own account!'));
   try {
+    const listings = await Listing.find({ userRef: req.params.id });
+    const user = await User.findById(req.params.id);
+    const imageUrls = listings.flatMap((listing) => listing.imageUrls);
+    if (user) imageUrls.push(user.avatar);
+    await deleteImagesByUrls(imageUrls);
     await Listing.deleteMany({ userRef: req.params.id });
     await User.findByIdAndDelete(req.params.id);
     res.clearCookie('access_token');

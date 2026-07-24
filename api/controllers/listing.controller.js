@@ -1,5 +1,6 @@
 import Listing from '../models/listing.model.js';
 import { errorHandler } from '../utils/error.js';
+import { deleteImagesByUrls } from './image.controller.js';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -79,6 +80,7 @@ export const deleteListing = async (req, res, next) => {
     }
 
     await Listing.findByIdAndDelete(req.params.id);
+    await deleteImagesByUrls(listing.imageUrls);
     res.status(200).json('Listing has been deleted!');
   } catch (error) {
     next(error);
@@ -104,6 +106,10 @@ export const updateListing = async (req, res, next) => {
       { $set: data },
       { new: true, runValidators: true }
     );
+    const removedImages = listing.imageUrls.filter(
+      (url) => !data.imageUrls.includes(url)
+    );
+    await deleteImagesByUrls(removedImages);
     res.status(200).json(updatedListing);
   } catch (error) {
     next(error);

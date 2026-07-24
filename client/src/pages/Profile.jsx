@@ -1,12 +1,6 @@
 import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect } from 'react';
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from 'firebase/storage';
-import { app } from '../firebase';
+import uploadImage from '../utils/uploadImage';
 import {
   updateUserStart,
   updateUserSuccess,
@@ -32,37 +26,19 @@ export default function Profile() {
   const [userListings, setUserListings] = useState([]);
   const dispatch = useDispatch();
 
-  // firebase storage
-  // allow read;
-  // allow write: if
-  // request.resource.size < 2 * 1024 * 1024 &&
-  // request.resource.contentType.matches('image/.*')
-
   useEffect(() => {
     if (!file) return;
 
-    const storage = getStorage(app);
-    const fileName = new Date().getTime() + file.name;
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
     setFileUploadError(false);
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setFilePerc(Math.round(progress));
-      },
-      () => {
-        setFileUploadError(true);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
-          setFormData((prev) => ({ ...prev, avatar: downloadURL }))
-        );
-      }
-    );
+    setFilePerc(0);
+    uploadImage(file, (progress) => setFilePerc(Math.min(progress, 99)))
+      .then((url) => {
+        setFilePerc(100);
+        setFormData((prev) => ({ ...prev, avatar: url }));
+      })
+      .catch((err) => {
+        setFileUploadError(err.message || 'Image upload failed');
+      });
   }, [file]);
 
 
@@ -179,9 +155,7 @@ export default function Profile() {
         />
         <p className='text-sm self-center'>
           {fileUploadError ? (
-            <span className='text-red-700'>
-              Error Image upload (image must be less than 2 mb)
-            </span>
+            <span className='text-red-700'>{fileUploadError}</span>
           ) : filePerc > 0 && filePerc < 100 ? (
             <span className='text-slate-700'>{`Uploading ${filePerc}%`}</span>
           ) : filePerc === 100 ? (
