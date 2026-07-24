@@ -22,6 +22,9 @@ const __dirname = path.resolve();
 
 const app = express();
 
+// Needed so req.secure is accurate behind HTTPS-terminating proxies (Render, Heroku, ...)
+app.set('trust proxy', 1);
+
 app.use(express.json());
 
 app.use(cookieParser());

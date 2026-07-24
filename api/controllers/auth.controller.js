@@ -4,12 +4,15 @@ import { errorHandler } from '../utils/error.js';
 import jwt from 'jsonwebtoken';
 
 const TOKEN_EXPIRY = '7d';
-const COOKIE_OPTIONS = {
+// `secure` must reflect the actual connection: a Secure cookie set over
+// plain-HTTP localhost is silently discarded by some browsers, which makes
+// every authenticated request fail with 401 right after signing in.
+const cookieOptions = (req) => ({
   httpOnly: true,
   sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
+  secure: req.secure,
   maxAge: 7 * 24 * 60 * 60 * 1000,
-};
+});
 
 const duplicateFieldMessage = (error) => {
   const field = Object.keys(error.keyValue || {})[0] || 'account';
@@ -62,7 +65,7 @@ export const signin = async (req, res, next) => {
     });
     const { password: pass, ...rest } = validUser._doc;
     res
-      .cookie('access_token', token, COOKIE_OPTIONS)
+      .cookie('access_token', token, cookieOptions(req))
       .status(200)
       .json(rest);
   } catch (error) {
@@ -82,7 +85,7 @@ export const google = async (req, res, next) => {
       });
       const { password: pass, ...rest } = user._doc;
       res
-        .cookie('access_token', token, COOKIE_OPTIONS)
+        .cookie('access_token', token, cookieOptions(req))
         .status(200)
         .json(rest);
     } else {
@@ -104,7 +107,7 @@ export const google = async (req, res, next) => {
       });
       const { password: pass, ...rest } = newUser._doc;
       res
-        .cookie('access_token', token, COOKIE_OPTIONS)
+        .cookie('access_token', token, cookieOptions(req))
         .status(200)
         .json(rest);
     }
