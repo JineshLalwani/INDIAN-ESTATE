@@ -30,9 +30,8 @@ export default function CreateListing() {
     const [imageUploadError, setImageUploadError] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState(false);
-    const [loading, setLoading] = useState(false);    
-    console.log(formData);
-    const handleImageSubmit = (e) => {
+    const [loading, setLoading] = useState(false);
+    const handleImageSubmit = () => {
       if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
         setUploading(true);
         setImageUploadError(false);
@@ -50,7 +49,7 @@ export default function CreateListing() {
             setImageUploadError(false);
             setUploading(false);
           })
-          .catch((err) => {
+          .catch(() => {
             setImageUploadError('Image upload failed (2 mb max per image)');
             setUploading(false);
           });
@@ -146,6 +145,7 @@ export default function CreateListing() {
           setLoading(false);
           if (data.success === false) {
             setError(data.message);
+            return;
           }
           navigate(`/listing/${data._id}`);
         } catch (error) {

@@ -9,7 +9,7 @@ import { app } from '../firebase';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
-export default function CreateListing() {
+export default function UpdateListing() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const params = useParams();
@@ -35,20 +35,24 @@ export default function CreateListing() {
 
   useEffect(() => {
     const fetchListing = async () => {
-      const listingId = params.listingId;
-      const res = await fetch(`/api/listing/get/${listingId}`);
-      const data = await res.json();
-      if (data.success === false) {
-        console.log(data.message);
-        return;
+      try {
+        const listingId = params.listingId;
+        const res = await fetch(`/api/listing/get/${listingId}`);
+        const data = await res.json();
+        if (data.success === false) {
+          setError(data.message);
+          return;
+        }
+        setFormData(data);
+      } catch (err) {
+        setError('Could not load the listing.');
       }
-      setFormData(data);
     };
 
     fetchListing();
-  }, []);
+  }, [params.listingId]);
 
-  const handleImageSubmit = (e) => {
+  const handleImageSubmit = () => {
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
       setUploading(true);
       setImageUploadError(false);
@@ -66,7 +70,7 @@ export default function CreateListing() {
           setImageUploadError(false);
           setUploading(false);
         })
-        .catch((err) => {
+        .catch(() => {
           setImageUploadError('Image upload failed (2 mb max per image)');
           setUploading(false);
         });
@@ -162,6 +166,7 @@ export default function CreateListing() {
       setLoading(false);
       if (data.success === false) {
         setError(data.message);
+        return;
       }
       navigate(`/listing/${data._id}`);
     } catch (error) {

@@ -25,7 +25,6 @@ export default function SignUp() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      console.log(data);
       if (data.success === false) {
         setLoading(false);
         setError(data.message);
@@ -48,6 +47,7 @@ export default function SignUp() {
           placeholder='username'
           className='border p-3 rounded-lg'
           id='username'
+          required
           onChange={handleChange}
         />
         <input
@@ -55,6 +55,7 @@ export default function SignUp() {
           placeholder='email'
           className='border p-3 rounded-lg'
           id='email'
+          required
           onChange={handleChange}
         />
         <input
@@ -62,6 +63,8 @@ export default function SignUp() {
           placeholder='password'
           className='border p-3 rounded-lg'
           id='password'
+          required
+          minLength={6}
           onChange={handleChange}
         />
 

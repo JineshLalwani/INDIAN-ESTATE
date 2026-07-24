@@ -13,8 +13,10 @@ import {
   updateUserFailure,
   deleteUserFailure,
   deleteUserStart,
-  deleteUserSuccess, 
-  signOutUserStart,   
+  deleteUserSuccess,
+  signOutUserStart,
+  signOutUserSuccess,
+  signOutUserFailure,
 } from '../redux/user/userSlice';
 import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -37,17 +39,14 @@ export default function Profile() {
   // request.resource.contentType.matches('image/.*')
 
   useEffect(() => {
-    if (file) {
-      handleFileUpload(file);
-    }
-  }, [file]);
+    if (!file) return;
 
-  const handleFileUpload = (file) => {
     const storage = getStorage(app);
     const fileName = new Date().getTime() + file.name;
     const storageRef = ref(storage, fileName);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
+    setFileUploadError(false);
     uploadTask.on(
       'state_changed',
       (snapshot) => {
@@ -55,23 +54,25 @@ export default function Profile() {
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setFilePerc(Math.round(progress));
       },
-      (error) => {
+      () => {
         setFileUploadError(true);
       },
       () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
-          setFormData({ ...formData, avatar: downloadURL })
+          setFormData((prev) => ({ ...prev, avatar: downloadURL }))
         );
       }
     );
-  };
-  
+  }, [file]);
+
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUpdateSuccess(false);
     try {
       dispatch(updateUserStart());
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
@@ -111,18 +112,17 @@ export default function Profile() {
     }
   };
   const handleSignOut = async () => {
-
     try {
       dispatch(signOutUserStart());
       const res = await fetch('/api/auth/signout');
       const data = await res.json();
       if (data.success === false) {
-        dispatch(deleteUserFailure(data.message));
+        dispatch(signOutUserFailure(data.message));
         return;
       }
-      dispatch(deleteUserSuccess(data));
+      dispatch(signOutUserSuccess(data));
     } catch (error) {
-      dispatch(deleteUserFailure(data.message));
+      dispatch(signOutUserFailure(error.message));
     }
   };
 
@@ -211,6 +211,7 @@ export default function Profile() {
           placeholder='password'
           onChange={handleChange}
           id='password'
+          minLength={6}
           className='border p-3 rounded-lg'
         />
         <button

@@ -14,6 +14,11 @@ export const updateUser = async (req, res, next) => {
     return next(errorHandler(401, 'You can only update your own account!'));
   try {
     if (req.body.password) {
+      if (req.body.password.length < 6) {
+        return next(
+          errorHandler(400, 'Password must be at least 6 characters!')
+        );
+      }
       req.body.password = bcryptjs.hashSync(req.body.password, 10);
     }
 
@@ -30,10 +35,16 @@ export const updateUser = async (req, res, next) => {
       { new: true }
     );
 
+    if (!updatedUser) return next(errorHandler(404, 'User not found!'));
+
     const { password, ...rest } = updatedUser._doc;
 
     res.status(200).json(rest);
   } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue || {})[0] || 'account';
+      return next(errorHandler(409, `That ${field} is already taken!`));
+    }
     next(error);
   }
 };
@@ -42,6 +53,7 @@ export const deleteUser = async (req, res, next) => {
   if (req.user.id !== req.params.id)
     return next(errorHandler(401, 'You can only delete your own account!'));
   try {
+    await Listing.deleteMany({ userRef: req.params.id });
     await User.findByIdAndDelete(req.params.id);
     res.clearCookie('access_token');
     res.status(200).json('User has been deleted!');

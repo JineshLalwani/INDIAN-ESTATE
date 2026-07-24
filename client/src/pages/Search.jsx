@@ -1,23 +1,27 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ListingItem from '../components/ListingItem';
 
 export default function Search() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [sidebardata, setSidebardata] = useState({
       searchTerm: '',
       type: 'all',
       parking: false,
       furnished: false,
       offer: false,
-      sort: 'created_at',
+      minPrice: '',
+      maxPrice: '',
+      sort: 'createdAt',
       order: 'desc',
     });
-  
+
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
     const [listings, setListings] = useState([]);
     const [showMore, setShowMore] = useState(false);
-  
+
     useEffect(() => {
       const urlParams = new URLSearchParams(location.search);
       const searchTermFromUrl = urlParams.get('searchTerm');
@@ -25,15 +29,19 @@ export default function Search() {
       const parkingFromUrl = urlParams.get('parking');
       const furnishedFromUrl = urlParams.get('furnished');
       const offerFromUrl = urlParams.get('offer');
+      const minPriceFromUrl = urlParams.get('minPrice');
+      const maxPriceFromUrl = urlParams.get('maxPrice');
       const sortFromUrl = urlParams.get('sort');
       const orderFromUrl = urlParams.get('order');
-  
+
       if (
         searchTermFromUrl ||
         typeFromUrl ||
         parkingFromUrl ||
         furnishedFromUrl ||
         offerFromUrl ||
+        minPriceFromUrl ||
+        maxPriceFromUrl ||
         sortFromUrl ||
         orderFromUrl
       ) {
@@ -43,29 +51,38 @@ export default function Search() {
           parking: parkingFromUrl === 'true' ? true : false,
           furnished: furnishedFromUrl === 'true' ? true : false,
           offer: offerFromUrl === 'true' ? true : false,
-          sort: sortFromUrl || 'created_at',
+          minPrice: minPriceFromUrl || '',
+          maxPrice: maxPriceFromUrl || '',
+          sort: sortFromUrl || 'createdAt',
           order: orderFromUrl || 'desc',
         });
       }
-  
+
       const fetchListings = async () => {
-        setLoading(true);
-        setShowMore(false);
-        const searchQuery = urlParams.toString();
-        const res = await fetch(`/api/listing/get?${searchQuery}`);
-        const data = await res.json();
-        if (data.length > 8) {
-            setShowMore(true);
-          } else {
-            setShowMore(false);
-          } 
-        setListings(data);
-        setLoading(false);
+        try {
+          setLoading(true);
+          setError(false);
+          setShowMore(false);
+          const searchQuery = urlParams.toString();
+          const res = await fetch(`/api/listing/get?${searchQuery}`);
+          const data = await res.json();
+          if (!Array.isArray(data)) {
+            setError(true);
+            setListings([]);
+            return;
+          }
+          setShowMore(data.length > 8);
+          setListings(data);
+        } catch (err) {
+          setError(true);
+        } finally {
+          setLoading(false);
+        }
       };
-  
+
       fetchListings();
     }, [location.search]);
-  
+
     const handleChange = (e) => {
       if (
         e.target.id === 'all' ||
@@ -74,11 +91,15 @@ export default function Search() {
       ) {
         setSidebardata({ ...sidebardata, type: e.target.id });
       }
-  
+
       if (e.target.id === 'searchTerm') {
         setSidebardata({ ...sidebardata, searchTerm: e.target.value });
       }
-  
+
+      if (e.target.id === 'minPrice' || e.target.id === 'maxPrice') {
+        setSidebardata({ ...sidebardata, [e.target.id]: e.target.value });
+      }
+
       if (
         e.target.id === 'parking' ||
         e.target.id === 'furnished' ||
@@ -86,28 +107,39 @@ export default function Search() {
       ) {
         setSidebardata({
           ...sidebardata,
-          [e.target.id]:
-            e.target.checked || e.target.checked === 'true' ? true : false,
+          [e.target.id]: e.target.checked,
         });
       }
-  
+
       if (e.target.id === 'sort_order') {
-        const sort = e.target.value.split('_')[0] || 'created_at';
-  
+        const sort = e.target.value.split('_')[0] || 'createdAt';
+
         const order = e.target.value.split('_')[1] || 'desc';
-  
+
         setSidebardata({ ...sidebardata, sort, order });
       }
     };
-  
+
     const handleSubmit = (e) => {
       e.preventDefault();
+      if (
+        sidebardata.minPrice !== '' &&
+        sidebardata.maxPrice !== '' &&
+        +sidebardata.minPrice > +sidebardata.maxPrice
+      ) {
+        setError(true);
+        return;
+      }
       const urlParams = new URLSearchParams();
       urlParams.set('searchTerm', sidebardata.searchTerm);
       urlParams.set('type', sidebardata.type);
       urlParams.set('parking', sidebardata.parking);
       urlParams.set('furnished', sidebardata.furnished);
       urlParams.set('offer', sidebardata.offer);
+      if (sidebardata.minPrice !== '')
+        urlParams.set('minPrice', sidebardata.minPrice);
+      if (sidebardata.maxPrice !== '')
+        urlParams.set('maxPrice', sidebardata.maxPrice);
       urlParams.set('sort', sidebardata.sort);
       urlParams.set('order', sidebardata.order);
       const searchQuery = urlParams.toString();
@@ -115,18 +147,23 @@ export default function Search() {
     };
 
     const onShowMoreClick = async () => {
-        const numberOfListings = listings.length;
-        const startIndex = numberOfListings;
-        const urlParams = new URLSearchParams(location.search);
-        urlParams.set('startIndex', startIndex);
-        const searchQuery = urlParams.toString();
-        const res = await fetch(`/api/listing/get?${searchQuery}`);
-        const data = await res.json();
-        if (data.length < 9) {
-          setShowMore(false);
+        try {
+          const numberOfListings = listings.length;
+          const startIndex = numberOfListings;
+          const urlParams = new URLSearchParams(location.search);
+          urlParams.set('startIndex', startIndex);
+          const searchQuery = urlParams.toString();
+          const res = await fetch(`/api/listing/get?${searchQuery}`);
+          const data = await res.json();
+          if (!Array.isArray(data)) return;
+          if (data.length < 9) {
+            setShowMore(false);
+          }
+          setListings([...listings, ...data]);
+        } catch (err) {
+          console.log(err);
         }
-        setListings([...listings, ...data]);
-      };    
+      };
   return (
     <div className='flex flex-col md:flex-row'>
       <div className='p-7  border-b-2 md:border-r-2 md:min-h-screen'>
@@ -210,11 +247,33 @@ export default function Search() {
               <span>Furnished</span>
             </div>
           </div>
+          <div className='flex gap-2 flex-wrap items-center'>
+            <label className='font-semibold'>Price:</label>
+            <input
+              type='number'
+              id='minPrice'
+              min='0'
+              placeholder='Min'
+              className='border rounded-lg p-3 w-24'
+              value={sidebardata.minPrice}
+              onChange={handleChange}
+            />
+            <span>to</span>
+            <input
+              type='number'
+              id='maxPrice'
+              min='0'
+              placeholder='Max'
+              className='border rounded-lg p-3 w-24'
+              value={sidebardata.maxPrice}
+              onChange={handleChange}
+            />
+          </div>
           <div className='flex items-center gap-2'>
             <label className='font-semibold'>Sort:</label>
             <select
               onChange={handleChange}
-              defaultValue={'created_at_desc'}
+              value={`${sidebardata.sort}_${sidebardata.order}`}
               id='sort_order'
               className='border rounded-lg p-3'
             >
@@ -234,7 +293,12 @@ export default function Search() {
           Listing results:
         </h1>
         <div className='p-7 flex flex-wrap gap-4'>
-          {!loading && listings.length === 0 && (
+          {error && (
+            <p className='text-xl text-red-700 w-full'>
+              Something went wrong — check your filters and try again.
+            </p>
+          )}
+          {!loading && !error && listings.length === 0 && (
             <p className='text-xl text-slate-700'>No listing found!</p>
           )}
           {loading && (
